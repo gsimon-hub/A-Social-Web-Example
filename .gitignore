@@ -1,0 +1,15 @@
+# node.js
+frontend/**/node_modules
+frontend/**/build
+frontend/**/npm-debug.log
+frontend/**/.env
+frontend/**/.DS_Store
+
+# django
+backend/**/*.log
+backend/**/*.pot
+backend/**/*.pyc
+backend/**/__pycache__/
+backend/**/local_settings.py
+backend/**/db.sqlite3
+backend/**/__init*
