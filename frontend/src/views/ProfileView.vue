@@ -1,32 +1,97 @@
 <script setup>
-import FeedItem from '@/components/FeedItem.vue';
 import PeopleYouMayKnow from '@/components/PeopleYouMayKnow.vue';
 import Trends from '@/components/Trends.vue';
+import { useUserStore } from '@/stores/user';
 import axios from 'axios';
-import { onMounted, ref } from 'vue';
+import { onMounted, reactive, ref, watch } from 'vue';
+import { onBeforeRouteUpdate, useRoute, useRouter } from 'vue-router';
+import FeedItem from '@/components/FeedItem.vue';
+import { useToastStore } from '@/stores/toast';
+// import router from '@/router';
 
 const posts = ref([])
+const user = reactive({})
 const body = ref('')
+const userStore = useUserStore()
+const toastStore = useToastStore()
+// useRoute, not useRouter 🚩
+const route = useRoute()
+const router = useRouter()
 
-onMounted(() => {
+// computed() line not needed for this script 🚩
+// const user_id = computed(() => route.params.id);
+// console.log('user', route.params.id)
+
+function sendFriendshipRequest() {
     axios
-        .get('/api/posts/')
+        .post(`/api/friends/request/${route.params.id}/`)
         .then(response => {
-            posts.value = response.data
+            console.log('data', response.data)
+            if (response.data.message === 'Request already fulfilled.') {
+                toastStore.showToast(5000, 'Request already exists or Sent request to SELF', 'bg-red-300')
+            } else {
+                toastStore.showToast(5000, 'Request FULFILLED', 'bg-emerald-300')
+            }
         })
         .catch(error => {
             console.log('error', error)
         })
-    })
-    
+}
+
+function getFeed() {
+    axios
+        // .get(`/api/posts/profile/${this.route.params.id}`)
+        .get(`/api/posts/profile/${route.params.id}`)
+        .then(response => {
+            posts.value = response.data.posts
+            Object.assign(user, response.data.user)
+            // user.value = response.data.user
+            // console.log('user: ', user.value)
+        })
+        .catch(error => {
+            console.log('error', error)
+        })
+}
+
+function logout() {
+    userStore.removeToken()
+    router.push('/login')
+}
+
+onMounted(() => { getFeed() })
+// onUpdated(() => { getFeed() })
+// onBeforeRouteUpdate(async (from, to) => {
+//     getFeed() 
+//     console.log('route updated')
+// })
+
+watch(route, (from, to) => {
+    getFeed()
+    console.log('route changed')
+})
+
+// onMounted(() => {
+//     console.log('root: ', user_id)
+// axios
+//     // .get('/api/posts/profile/${$route.params.id}')
+//     .get(`/api/posts/profile/${$route.params.id}`)
+//     .then(response => {
+//         posts.value = response.data.posts
+//         user.value = response.data.user
+//     })
+//     .catch(error => {
+//         console.log('error', error)
+//     })
+// })
+
 function submitForm() {
-    console.log('submitForm', body.value)
+    // console.log('submitForm', body.value)
     axios
         .post('/api/posts/create/', {
             'body': body.value
         })
         .then(response => {
-            // console.log('data', response.data)
+            console.log('data', response.data)
             posts.value.unshift(response.data)
             body.value = ''
         })
@@ -39,18 +104,40 @@ function submitForm() {
 
 <template>
     <div class="max-w-7xl mx-auto grid grid-cols-4 gap-4">
-       
-        <div class="main-center col-span-3 space-y-4">
-            <div class="bg-white border border-gray-200 rounded-lg">
+        <div class="main-left col-span-1">
+            <div class="p-4 bg-white border border-gray-200 text-center rounded-lg">
+                <img src="https://i.pravatar.cc/300?img=70" class="mb-6 rounded-full">
+
+                <p><strong>{{ user.name }}</strong></p>
+
+                <div class="mt-6 flex space-x-8 justify-around">
+                    <RouterLink :to="{ name: 'friends', params: { id: user.id } }" class="text-xs text-gray-500">{{
+                        user.friends_count }} friends</RouterLink>
+                    <p class="text-xs text-gray-500">120 posts</p>
+                </div>
+
+                <div class="mt-6">
+                    <button v-if="userStore.user.id !== user.id" @click="sendFriendshipRequest"
+                        class="inline-block py-4 px-3 bg-purple-600 text-xs text-white rounded-lg">Request
+                        Friendship</button>
+                    <button v-else @click="logout"
+                        class="inline-block py-4 px-3 bg-red-600 text-xs text-white rounded-lg">Log Out</button>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="main-center col-span-2 space-y-4">
+            <div v-if="userStore.user.id === user.id" class="bg-white border border-gray-200 rounded-lg">
                 <form method="post" @submit.prevent="submitForm">
                     <div class="p-4">
                         <textarea v-model="body" class="p-4 w-full bg-gray-100 rounded-lg"
                             placeholder="What are you thinking about?"></textarea>
                     </div>
-    
+
                     <div class="p-4 border-t border-gray-100 flex justify-between">
                         <a href="#" class="inline-block py-4 px-6 bg-gray-600 text-white rounded-lg">Attach image</a>
-    
+
                         <button class="inline-block py-4 px-6 bg-purple-600 text-white rounded-lg">Post</button>
                     </div>
                 </form>
@@ -110,7 +197,8 @@ function submitForm() {
                 </div>
             </div>
 
-            <div class="p-4 bg-white border border-gray-200 rounded-lg"  v-for="post in posts" :key="post.id">
+            <!-- <div v-if="userStore.user.id === user.id" class="p-4 bg-white border border-gray-200 rounded-lg" v-for="post in posts" :key="post.id"> -->
+            <div class="p-4 bg-white border border-gray-200 rounded-lg" v-for="post in posts" :key="post.id">
                 <FeedItem :post="post" />
             </div>
         </div>

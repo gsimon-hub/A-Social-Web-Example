@@ -33,6 +33,13 @@ class User(AbstractBaseUser, PermissionsMixin):
     name = models.CharField(max_length= 255, blank= True, default= '')
     avatar = models.ImageField(upload_to='avatars', blank= True, null= True)
 
+    friends = models.ManyToManyField('self')
+    friends_count = models.IntegerField(default= 0)
+
+    is_active = models.BooleanField(default= True)
+    is_superuser = models.BooleanField(default= False)
+    is_staff = models.BooleanField(default= False)
+
     date_joined = models.DateTimeField(default= timezone.now)
     last_login = models.DateTimeField(blank= True, null= True)
 
@@ -41,3 +48,15 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'email'
     EMAIL_FIELD = 'email'
     REQUIRED_FIELDS = []
+
+class FriendshipRequest(models.Model):
+    STATUS_CHOICES = [
+        ('sent', 'Sent'),
+        ('accepted', 'Accepted'),
+        ('rejected', 'Rejected')
+    ]
+    id = models.UUIDField(primary_key= True, default= uuid.uuid4, editable= False)
+    created_for = models.ForeignKey(User, related_name= 'received_requests', on_delete= models.CASCADE)
+    created_by = models.ForeignKey(User, related_name= 'created_requests', on_delete= models.CASCADE)
+    status = models.CharField(max_length= 30, choices= STATUS_CHOICES, default= 'sent')
+    created = models.DateTimeField(auto_now_add= True)

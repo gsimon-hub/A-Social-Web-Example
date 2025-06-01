@@ -52,10 +52,12 @@ REST_FRAMEWORK = {
 
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
+    'http://127.0.0.1:5173',
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:5173',
+    'http://127.0.0.1:5173',
 ]
 
 INSTALLED_APPS = [
@@ -69,6 +71,8 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     'account',
+    'post.apps.PostConfig',
+    'search.apps.SearchConfig',
 ]
 
 MIDDLEWARE = [

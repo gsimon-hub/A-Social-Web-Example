@@ -1,5 +1,24 @@
-<script setup lang="ts">
+<script setup>
+import axios from 'axios';
 import Toast from './components/Toast.vue';
+import { useUserStore } from './stores/user';
+import { onMounted } from 'vue';
+import ProfileView from './views/ProfileView.vue';
+
+const userStore = useUserStore()
+
+onMounted(() => {
+  userStore.initStore()
+
+  const token = userStore.user.access
+
+  if (token) {
+    axios.defaults.headers.common["Authorization"] = "Bearer " + token
+  } else {
+    axios.defaults.headers.common["Authorization"] = ''
+  }
+
+})
 
 </script>
 
@@ -11,15 +30,15 @@ import Toast from './components/Toast.vue';
           <a href="#" class="text-xl">Wey</a>
         </div>
     
-        <div class="menu-center flex space-x-12">
-          <a href="#" class="text-purple-700">
+        <div class="menu-center flex space-x-12" v-if="userStore.user.isAuthenticated">
+          <RouterLink to="/feed" class="text-purple-700">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
               class="w-6 h-6">
               <path stroke-linecap="round" stroke-linejoin="round"
                 d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25">
               </path>
             </svg>
-          </a>
+          </RouterLink>
     
           <a href="#">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
@@ -39,19 +58,25 @@ import Toast from './components/Toast.vue';
             </svg>
           </a>
     
-          <a href="#">
+          <RouterLink to="/search">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
               class="w-6 h-6">
               <path stroke-linecap="round" stroke-linejoin="round"
                 d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path>
             </svg>
-          </a>
+          </RouterLink>
         </div>
     
         <div class="menu-right">
-          <a href="#">
-            <img src="https://i.pravatar.cc/40?img=70" class="rounded-full">
-          </a>
+          <template v-if="userStore.user.isAuthenticated">
+            <RouterLink :to="{name: 'profile', params: {'id': userStore.user.id}}">
+              <img src="https://i.pravatar.cc/40?img=70" class="rounded-full">
+            </RouterLink>
+          </template>
+          <template v-else>
+            <RouterLink to="/login" class="mr-4 py-4 px-6 bg-gray-600 text-white rounded-lg">Log In</RouterLink>
+            <RouterLink to="/signup" class="py-4 px-6 bg-purple-600 text-white rounded-lg">Sign Up</RouterLink>
+          </template>
         </div>
       </div>
     </div>
@@ -59,5 +84,5 @@ import Toast from './components/Toast.vue';
   <main class="px-8 py-6 bg-gray-100">
     <RouterView />
   </main>
-  <!-- <Toast /> -->
+  <Toast />
 </template>
