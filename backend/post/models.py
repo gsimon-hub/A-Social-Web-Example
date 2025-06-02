@@ -10,6 +10,17 @@ class Like(models.Model):
     liked_by = models.ForeignKey(User, related_name= 'likes', on_delete= models.CASCADE)
     created = models.DateTimeField(auto_now_add= True)
 
+class Comment(models.Model):
+    id = models.UUIDField(primary_key= True, default= uuid.uuid4, editable= False)
+    body = models.TextField(null= True, blank= True)
+    author = models.ForeignKey(User, related_name= 'comments', on_delete= models.CASCADE)
+    created = models.DateTimeField(auto_now_add= True)
+
+    class Meta:
+        ordering = ['-created']
+
+    def created_formatted(self):
+        return timesince(self.created)
 
 class PostAttachment(models.Model):
     id = models.UUIDField(primary_key= True, default= uuid.uuid4, editable= False)
@@ -33,6 +44,9 @@ class Post(models.Model):
 
     likes = models.ManyToManyField(Like, blank= True)
     likes_total = models.IntegerField(default= 0)
+
+    comments = models.ManyToManyField(Comment, blank= True)
+    comments_total = models.IntegerField(default= 0)
 
     class Meta:
         ordering = ['-created']

@@ -1,10 +1,10 @@
 # from django.shortcuts import render
 from rest_framework.decorators import api_view
 from django.http import JsonResponse
-from .serializers import PostSerializer
+from .serializers import PostSerializer, PostDetailSerializer, CommentSerializer
 from account.models import User
 from account.serializers import UserSerializer
-from .models import Post
+from .models import Post, Like, Comment
 from .forms import PostForm
 
 # Create your views here.
@@ -14,6 +14,14 @@ def post_list(request):
     serializer = PostSerializer(posts, many = True)
 
     return JsonResponse(serializer.data, safe = False)
+
+@api_view(['GET'])
+def post_detail(request, pk):
+    post = Post.objects.get(pk = pk)
+
+    return JsonResponse({
+        'post': PostDetailSerializer(post).data
+    }, safe= False)
 
 @api_view(['GET'])
 def post_list_profile(request, id):
@@ -44,3 +52,36 @@ def post_create(request):
         return JsonResponse(serializer.data, safe = False)
 
     return JsonResponse({'Hola': 'hello'})
+
+@api_view(['POST'])
+def post_like(request, id):
+    post = Post.objects.get(pk = id)
+    # like = Like.objects.create(liked_by = request.user)
+    if post.likes.filter(liked_by = request.user).exists():
+        # print(f'Already exists: {post.likes.filter(liked_by = request.user).exists()}')
+        post.likes.filter(liked_by = request.user).delete()
+        post.likes_total -= 1
+        post.save()
+        return JsonResponse({'message': 'REMOVED'})
+    else:
+        like = Like.objects.create(liked_by = request.user)
+        # post.likes.add(Like(liked_by = request.user)) 🚩FAILED
+        post.likes.add(like)
+        post.likes_total += 1
+        post.save()
+
+        return JsonResponse({'message': 'ILikeIt'})
+
+@api_view(['POST'])
+def post_comment(request, pk):
+    post = Post.objects.get(pk = pk)
+
+    comment = Comment.objects.create(body = request.data['body'], author = request.user)
+    post.comments.add(comment)
+    post.comments_total += 1
+    post.save()
+
+    # print(request.data)
+    serializer = CommentSerializer(comment, read_only = True)
+
+    return JsonResponse(serializer.data, safe= False)
