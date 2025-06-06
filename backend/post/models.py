@@ -54,3 +54,6 @@ class Post(models.Model):
     def created_formatted(self):
         return timesince(self.created)
 
+class Trend(models.Model):
+    hashTag = models.CharField(max_length= 255)
+    occurences = models.IntegerField()

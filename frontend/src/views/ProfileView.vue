@@ -45,8 +45,10 @@ function getFeed() {
         .then(response => {
             posts.value = response.data.posts
             Object.assign(user, response.data.user)
+            
             // user.value = response.data.user
             // console.log('user: ', user.value)
+            // console.log('avatar: ', 'http://localhost:8000' + user.avatar)
         })
         .catch(error => {
             console.log('error', error)
@@ -65,7 +67,7 @@ onMounted(() => { getFeed() })
 //     console.log('route updated')
 // })
 
-watch(route, (from, to) => {
+watch(route, () => {
     getFeed()
     console.log('route changed')
 })
@@ -106,20 +108,22 @@ function submitForm() {
     <div class="max-w-7xl mx-auto grid grid-cols-4 gap-4">
         <div class="main-left col-span-1">
             <div class="p-4 bg-white border border-gray-200 text-center rounded-lg">
-                <img src="https://i.pravatar.cc/300?img=70" class="mb-6 rounded-full">
+                <!-- <img src="https://i.pravatar.cc/300?img=70" class="mb-6 rounded-full"> -->
+                <img :src="user.get_avatar" class="mb-6 rounded-full">
 
                 <p><strong>{{ user.name }}</strong></p>
 
                 <div class="mt-6 flex space-x-8 justify-around">
                     <RouterLink :to="{ name: 'friends', params: { id: user.id } }" class="text-xs text-gray-500">{{
                         user.friends_count }} friends</RouterLink>
-                    <p class="text-xs text-gray-500">120 posts</p>
+                    <p class="text-xs text-gray-500">{{ user.posts_count }} posts</p>
                 </div>
 
                 <div class="mt-6">
+                    <RouterLink v-if="userStore.user.id === user.id" to="/profile/edit"
+                    class="inline-block mr-2 py-4 px-3 bg-purple-600 text-xs text-white rounded-lg">EDIT</RouterLink>
                     <button v-if="userStore.user.id !== user.id" @click="sendFriendshipRequest"
-                        class="inline-block py-4 px-3 bg-purple-600 text-xs text-white rounded-lg">Request
-                        Friendship</button>
+                        class="inline-block py-4 px-3 bg-purple-600 text-xs text-white rounded-lg">Request Friendship</button>
                     <button v-else @click="logout"
                         class="inline-block py-4 px-3 bg-red-600 text-xs text-white rounded-lg">Log Out</button>
                 </div>
