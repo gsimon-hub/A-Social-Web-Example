@@ -3,15 +3,16 @@ import PeopleYouMayKnow from '@/components/PeopleYouMayKnow.vue';
 import Trends from '@/components/Trends.vue';
 import { useUserStore } from '@/stores/user';
 import axios from 'axios';
-import { onMounted, reactive, ref, watch } from 'vue';
+import { onMounted, ref, watch, reactive } from 'vue';
 import { onBeforeRouteUpdate, useRoute, useRouter } from 'vue-router';
 import FeedItem from '@/components/FeedItem.vue';
 import { useToastStore } from '@/stores/toast';
+import FeedForm from '@/components/FeedForm.vue';
 // import router from '@/router';
 
 const posts = ref([])
 const user = reactive({})
-const body = ref('')
+
 const userStore = useUserStore()
 const toastStore = useToastStore()
 // useRoute, not useRouter 🚩
@@ -86,22 +87,6 @@ watch(route, () => {
 //     })
 // })
 
-function submitForm() {
-    // console.log('submitForm', body.value)
-    axios
-        .post('/api/posts/create/', {
-            'body': body.value
-        })
-        .then(response => {
-            console.log('data', response.data)
-            posts.value.unshift(response.data)
-            body.value = ''
-        })
-        .catch(error => {
-            console.log('error', error)
-        })
-}
-
 </script>
 
 <template>
@@ -133,18 +118,7 @@ function submitForm() {
 
         <div class="main-center col-span-2 space-y-4">
             <div v-if="userStore.user.id === user.id" class="bg-white border border-gray-200 rounded-lg">
-                <form method="post" @submit.prevent="submitForm">
-                    <div class="p-4">
-                        <textarea v-model="body" class="p-4 w-full bg-gray-100 rounded-lg"
-                            placeholder="What are you thinking about?"></textarea>
-                    </div>
-
-                    <div class="p-4 border-t border-gray-100 flex justify-between">
-                        <a href="#" class="inline-block py-4 px-6 bg-gray-600 text-white rounded-lg">Attach image</a>
-
-                        <button class="inline-block py-4 px-6 bg-purple-600 text-white rounded-lg">Post</button>
-                    </div>
-                </form>
+                <FeedForm :user="user" :posts="posts" />
             </div>
 
             <div class="p-4 bg-white border border-gray-200 rounded-lg">

@@ -1,9 +1,13 @@
+from django.contrib.auth.forms import PasswordChangeForm
+from django.core.mail import send_mail
 from django.http import JsonResponse
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from .forms import SignupForm, ProfileForm
 from django.shortcuts import get_object_or_404
 from .models import User, FriendshipRequest
 from .serializers import UserSerializer, FriendsRequestSerializer
+
+from notification.utils import create_notification
 
 
 @api_view(['GET'])
@@ -30,11 +34,27 @@ def signup(request):
     })
 
     if form.is_valid():
-        form.save()
-    else:
-        message = 'error'
+        user = form.save()
+        user.is_active = False
+        user.save()
 
-    return JsonResponse({'status': message})
+        activate_url = f'http://127.0.0.1:8000/useractivate/?email={user.email}&id={user.id}'
+
+        send_mail(
+            "Pls verify your email",
+            f"The URL for this activation is: {activate_url}",
+            "admin@email.com",
+            [user.email],
+            fail_silently= False
+        )
+        
+    else:
+        # message = 'error'
+        message = form.errors.as_json()
+        # print(message)
+
+    # return JsonResponse({'status': message})
+    return JsonResponse({'message': message}, safe= False)
 
 @api_view(['POST'])
 def edit_profile(request):
@@ -47,14 +67,28 @@ def edit_profile(request):
         print(request.FILES)
         print(request.POST)
         
-        form = ProfileForm(request.POST, request.FILES, instance= user)
+        form = ProfileForm(request.POST, request.FILES, user= user)
 
         if form.is_valid():
             form.save()
+
+        user_serializer = UserSerializer(user)
         # user.name = request.data['name']
         # user.email = request.data['email']
         # user.save()
-        return JsonResponse({'message': 'Profile Updated.'})
+        return JsonResponse({'message': 'Profile Updated.', 'user': user_serializer.data})
+
+@api_view(['POST'])
+def edit_password(request):
+    user = request.user
+
+    form = PasswordChangeForm(data = request.POST, user = user)
+    if form.is_valid():
+        form.save()
+
+        return JsonResponse({'message': 'password changed'})
+
+    return JsonResponse({'message': form.errors.as_json()}, safe= False)
 
 @api_view(['GET'])
 def friends(request, pk):
@@ -72,6 +106,11 @@ def friends(request, pk):
         'requests': FriendsRequestSerializer(requests, many = True).data,
     }, safe= False)
 
+@api_view(['GET'])
+def friend_suggestions(request):
+    serializer = UserSerializer(request.user.people_you_may_know.all(), many = True)
+    return JsonResponse(serializer.data, safe= False)
+
 @api_view(['POST'])
 def friendship_request(request, pk):
     print('send_friendship_request:', pk)
@@ -82,10 +121,12 @@ def friendship_request(request, pk):
     check2 = FriendshipRequest.objects.filter(created_for = user, created_by = request.user)
     
     if user != request.user and (not check1 or not check2):
-        FriendshipRequest.objects.create(
+        fr = FriendshipRequest.objects.create(
             created_for = user,
             created_by = request.user
         )
+
+        notify = create_notification(request, 'newfriendreq', friendrequest_id = fr.id)
 
         return JsonResponse({'message': 'bla bla bla created'})
 
@@ -108,6 +149,11 @@ def handle_request(request, pk, status):
 
         request.user.friends_count = request.user.friends_count + 1
         request.user.save()
+
+        notify = create_notification(request, 'acceptedfriendreq', friendrequest_id = friend_request.id)
+    elif status == 'rejected':
+        notify = create_notification(request, 'acceptedfriendreq', friendrequest_id = friend_request.id)
+
 
     return JsonResponse({'handle requests': 'bla bla bla created'})
 

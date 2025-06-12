@@ -4,9 +4,12 @@ import PeopleYouMayKnow from '@/components/PeopleYouMayKnow.vue';
 import Trends from '@/components/Trends.vue';
 import axios from 'axios';
 import { onMounted, ref } from 'vue';
+import { useUserStore } from '@/stores/user';
+import FeedForm from '@/components/FeedForm.vue';
 
 const posts = ref([])
 const body = ref('')
+const userStore = useUserStore()
 
 onMounted(() => {
     axios
@@ -18,22 +21,6 @@ onMounted(() => {
             console.log('error', error)
         })
     })
-    
-function submitForm() {
-    console.log('submitForm', body.value)
-    axios
-        .post('/api/posts/create/', {
-            'body': body.value
-        })
-        .then(response => {
-            // console.log('data', response.data)
-            posts.value.unshift(response.data)
-            body.value = ''
-        })
-        .catch(error => {
-            console.log('error', error)
-        })
-}
 
 </script>
 
@@ -42,18 +29,9 @@ function submitForm() {
        
         <div class="main-center col-span-3 space-y-4">
             <div class="bg-white border border-gray-200 rounded-lg">
-                <form method="post" @submit.prevent="submitForm">
-                    <div class="p-4">
-                        <textarea v-model="body" class="p-4 w-full bg-gray-100 rounded-lg"
-                            placeholder="What are you thinking about?"></textarea>
-                    </div>
-    
-                    <div class="p-4 border-t border-gray-100 flex justify-between">
-                        <a href="#" class="inline-block py-4 px-6 bg-gray-600 text-white rounded-lg">Attach image</a>
-    
-                        <button class="inline-block py-4 px-6 bg-purple-600 text-white rounded-lg">Post</button>
-                    </div>
-                </form>
+                <div class="bg-white border border-gray-200 rounded-lg">
+                    <FeedForm :user="null" :posts="posts" />
+                </div>
             </div>
 
             <div class="p-4 bg-white border border-gray-200 rounded-lg">

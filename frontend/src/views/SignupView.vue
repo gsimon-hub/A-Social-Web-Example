@@ -37,7 +37,7 @@ function submitForm() {
             .post('/api/signup/', form)
             .then(response => {
                 // if (response.data.status === 'success') {
-                if (response.status === 200) {
+                if (errors.length === 0) {
                     toastStore.showToast(5000, 'The user is registered. Please activate your account by clicking your email link.', 'bg-emerald-500')
 
                     form.email = ''
@@ -46,10 +46,17 @@ function submitForm() {
                     form.password2 = ''
                 } else {
                     // const data = JSON.parse(response.data)
-                    const data = response.data
-                    for (const key in data) {
-                        errors.value.push(data[key])
-                    }
+                    const data = JSON.parse(response.data.message)
+                    // for (const key in data) {
+                    //     errors.value.push(data[key])
+                    // }
+
+                    let arr = Object.keys(data).map(key => data[key])
+                    let err_list = arr.map(objs => objs.map(obj => obj['message'])).flat(1)
+                    errors.value = err_list
+
+                    console.log('JSON errors: ', arr.map(objs => objs.map(obj => obj['message'])).flat(1))
+                    console.log('errors: ', errors)
 
                     toastStore.showToast(5000, 'Something went wrong. Please try again', 'bg-red-300')
                 }
@@ -115,7 +122,8 @@ function submitForm() {
 //                             const data = JSON.parse(response.data.message)
 //                             for (const key in data) {
 //                                 this.errors.push(data[key][0].message)
-//                             }//                             this.toastStore.showToast(5000, 'Something went wrong. Please try again', 'bg-red-300')
+//                             }
+//                             this.toastStore.showToast(5000, 'Something went wrong. Please try again', 'bg-red-300')
 //                         }
 //                     })
 //                     .catch(error => {

@@ -31,6 +31,12 @@ class PostAttachment(models.Model):
         related_name= 'post_attachments'
     )
 
+    def get_image(self):
+        if self.image:
+            return f'http://127.0.0.1:8000{self.image.url}'
+        else:
+            return ''
+
 class Post(models.Model):
     id = models.UUIDField(primary_key= True, default= uuid.uuid4, editable= False)
     body = models.TextField(blank= True, null= True)
@@ -41,6 +47,8 @@ class Post(models.Model):
         related_name= 'posts'
     )
     created = models.DateTimeField(auto_now_add= True)
+
+    is_private = models.BooleanField(default= False)
 
     likes = models.ManyToManyField(Like, blank= True)
     likes_total = models.IntegerField(default= 0)

@@ -8,57 +8,45 @@ import { useRouter } from 'vue-router';
 const toastStore = useToastStore()
 const userStore = useUserStore()
 const router = useRouter()
-const file = useTemplateRef('file')
 const form = reactive({
-    email: userStore.user.email,
-    name: userStore.user.name,
+    old_password: '',
+    new_password1: '',
+    new_password2: '',
     // avatar: null,
 })
 
 function submitForm() {
     errors.value = []
-    if (form.email === '') {
-        errors.value.push('Your e-mail is missing')
-    }
-
-    if (form.name === '') {
-        errors.value.push('Your name is missing')
+    if (form.new_password1 !== form.new_password2) {
+        errors.value.push('The password does not match.')
     }
 
     if (errors.value.length === 0) {
         let formData = new FormData()
-        formData.append('avatar', file.value.files[0])
-        formData.append('name', form.name)
-        formData.append('email', form.email)
+        formData.append('old_password', form.old_password)
+        formData.append('new_password1', form.new_password1)
+        formData.append('new_password2', form.new_password2)
 
         // console.log(formData)
         // console.log(this.$refs.file.files) not work🚩
         // console.log(file.value.files[0])
         axios
-            .post('/api/editprofile/', formData, {
+            .post('/api/editpassword/', formData, {
                 headers: {
                     "Content-Type": "multipart/form-data",
                 }
             })
             .then(response => {
                 // if (response.data.status === 'success') {
-                if (response.data.message === 'Profile Updated.') {
+                if (response.data.message === 'password changed') {
                     toastStore.showToast(5000, 'The Information was saved.', 'bg-emerald-500')
 
-                    userStore.setUserInfo({
-                        id: userStore.user.id,
-                        name: form.name,
-                        email: form.email,
-                        avatar: response.data.user.get_avatar
-                    })
-                    // form.email = ''
-                    // form.name = ''
-                    router.back()
+                    router.push(`/profile/${userStore.user.id}`)
                 } else {
                     // const data = JSON.parse(response.data)
-                    const data = response.data
+                    const data = response.data.message
                     for (const key in data) {
-                        errors.value.push(data[key])
+                        errors.value.push(data[key][0].message)
                     }
 
                     toastStore.showToast(5000, `${response.data.message}. Please try again`, 'bg-red-300')
@@ -76,17 +64,10 @@ const errors = ref([])
     <div class="max-w-7xl mx-auto grid grid-cols-2 gap-4">
         <div class="main-left">
             <div class="p-12 bg-white border border-gray-200 rounded-lg">
-                <h1 class="mb-6 text-2xl">Sign Up</h1>
+                <h1 class="mb-6 text-2xl">Change Password</h1>
                 <p class="mb-6 text-gray-500">
-                    Lorem ipsum dolor sit mate. Lorem ipsum dolor sit mate. Lorem ipsum dolor sit mate.
-                    Lorem ipsum dolor sit mate. Lorem ipsum dolor sit mate. Lorem ipsum dolor sit mate.
+                    Here you can change your password.
                 </p>
-                <p class="font-bold">
-                    <!-- Already have an account? <a href="#" class="underline">Click here</a> to log in! -->
-                    Already have an account? <RouterLink to="/login" class="underline">Click here</RouterLink> to log
-                    in!
-                </p>
-                <RouterLink to="/profile/edit/password" class="underline">Edit Password</RouterLink>
             </div>
         </div>
 
@@ -94,21 +75,21 @@ const errors = ref([])
             <div class="p-12 bg-white border border-gray-200 rounded-lg">
                 <form class="space-y-6" @submit.prevent="submitForm">
                     <div>
-                        <label>Name</label><br>
-                        <input type="text" v-model="form.name" placeholder="Your Full Name"
+                        <label>Old Password</label><br>
+                        <input type="password" v-model="form.old_password" placeholder="Your old Password"
                             class="w-full mt-2 py-4 px-6 border border-gray-200 rounded-lg">
                     </div>
 
                     <div>
-                        <label>E-mail</label><br>
-                        <input type="email" v-model="form.email" placeholder="Your e-mail address"
+                        <label>New Password</label><br>
+                        <input type="password" v-model="form.password1" placeholder="Your new Password"
                             class="w-full mt-2 py-4 px-6 border border-gray-200 rounded-lg">
                     </div>
 
                     <div>
-                        <label>AVATAR</label><br>
-                        <!-- <input type="file" ref="file" class="file-input" @change="selectFile" multiple> -->
-                        <input type="file" ref="file">
+                        <label>Repeat Password</label><br>
+                        <input type="password" v-model="form.password2" placeholder="Your new Password again"
+                            class="w-full mt-2 py-4 px-6 border border-gray-200 rounded-lg">
                     </div>
 
                     <template v-if="errors.length > 0">

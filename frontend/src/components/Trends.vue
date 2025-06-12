@@ -8,7 +8,7 @@ onMounted(() => {
     axios
         .get('/api/posts/trends/')
         .then(response => {
-            console.log(response.data)
+            // console.log(response.data)
             trends.value = response.data
         })
         .catch(err => {
