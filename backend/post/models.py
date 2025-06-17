@@ -1,4 +1,5 @@
 import uuid
+from django.conf import settings
 from django.db import models
 from django.utils.timesince import timesince
 from account.models import User
@@ -33,7 +34,7 @@ class PostAttachment(models.Model):
 
     def get_image(self):
         if self.image:
-            return f'http://127.0.0.1:8000{self.image.url}'
+            return settings.WEBSITE_URL + self.image.url
         else:
             return ''
 
@@ -49,6 +50,7 @@ class Post(models.Model):
     created = models.DateTimeField(auto_now_add= True)
 
     is_private = models.BooleanField(default= False)
+    reported_by_users = models.ManyToManyField(User, related_name= 'reported_posts', blank= True)
 
     likes = models.ManyToManyField(Like, blank= True)
     likes_total = models.IntegerField(default= 0)

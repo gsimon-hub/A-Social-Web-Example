@@ -11,6 +11,11 @@ const posts = ref([])
 const body = ref('')
 const userStore = useUserStore()
 
+function handelDelete(id) {
+    console.log('deletePost', id)
+    posts.value = posts.value.filter(post => post.id !== id)
+}
+
 onMounted(() => {
     axios
         .get('/api/posts/')
@@ -89,7 +94,7 @@ onMounted(() => {
             </div>
 
             <div class="p-4 bg-white border border-gray-200 rounded-lg"  v-for="post in posts" :key="post.id">
-                <FeedItem :post="post" />
+                <FeedItem :post="post" @deletePost="handelDelete" />
             </div>
         </div>
 

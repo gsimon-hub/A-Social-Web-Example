@@ -61,6 +61,11 @@ function logout() {
     router.push('/login')
 }
 
+function handleDelete(id) {
+    console.log('deletePost', id)
+    posts.value = posts.value.filter(post => post.id !== id)
+}
+
 onMounted(() => { getFeed() })
 // onUpdated(() => { getFeed() })
 // onBeforeRouteUpdate(async (from, to) => {
@@ -177,7 +182,7 @@ watch(route, () => {
 
             <!-- <div v-if="userStore.user.id === user.id" class="p-4 bg-white border border-gray-200 rounded-lg" v-for="post in posts" :key="post.id"> -->
             <div class="p-4 bg-white border border-gray-200 rounded-lg" v-for="post in posts" :key="post.id">
-                <FeedItem :post="post" />
+                <FeedItem :post="post" @deletePost="handleDelete" />
             </div>
         </div>
 
